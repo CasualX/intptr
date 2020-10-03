@@ -6,7 +6,7 @@ This crate's purpose is to model 32-bit and 64-bit 'pointers' to memory outside 
 
 Eg. when interacting with other processes' memory address space.
 
- */
+*/
 
 #![cfg_attr(not(test), no_std)]
 
@@ -23,7 +23,7 @@ pub use IntPtr32 as IntPtr;
 pub use IntPtr64 as IntPtr;
 
 impl<T: ?Sized> From<IntPtr32<T>> for IntPtr64<T> {
-	#[inline(always)]
+	#[inline]
 	fn from(ptr: IntPtr32<T>) -> IntPtr64<T> {
 		IntPtr64::from(ptr.into_raw() as u64)
 	}
