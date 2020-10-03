@@ -8,6 +8,7 @@ Eg. when interacting with other processes' memory address space.
 
 */
 
+#![cfg_attr(feature = "nightly", feature(structural_match))]
 #![cfg_attr(not(test), no_std)]
 
 mod ptr32;
@@ -26,5 +27,15 @@ impl<T: ?Sized> From<IntPtr32<T>> for IntPtr64<T> {
 	#[inline]
 	fn from(ptr: IntPtr32<T>) -> IntPtr64<T> {
 		IntPtr64::from(ptr.into_raw() as u64)
+	}
+}
+
+#[cfg(feature = "nightly")]
+#[test]
+fn test_match() {
+	const TEST_PTR: IntPtr = IntPtr::from_raw(0x1000);
+	match TEST_PTR {
+		TEST_PTR => (),
+		_ => panic!(),
 	}
 }

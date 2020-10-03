@@ -1,5 +1,4 @@
-use core::{cmp, fmt, hash, mem, ops, str};
-use core::marker::PhantomData;
+use core::{cmp, fmt, hash, marker, mem, ops, str};
 
 #[inline]
 const fn nibbles(word: u32) -> [u8; 8] {
@@ -20,14 +19,14 @@ const fn digit(nibble: u8) -> u8 {
 #[repr(transparent)]
 pub struct IntPtr32<T: ?Sized = ()> {
 	address: u32,
-	phantom_data: PhantomData<fn() -> T>,
+	phantom_data: marker::PhantomData<fn() -> T>,
 }
 
 impl<T: ?Sized> IntPtr32<T> {
 	// Work around unstable const fn features
-	const PHANTOM_DATA: PhantomData<fn() -> T> = PhantomData;
+	const PHANTOM_DATA: marker::PhantomData<fn() -> T> = marker::PhantomData;
 	/// Null pointer constant.
-	pub const NULL: IntPtr32<T> = IntPtr32 { address: 0, phantom_data: PhantomData };
+	pub const NULL: IntPtr32<T> = IntPtr32 { address: 0, phantom_data: marker::PhantomData };
 	/// Creates a null pointer.
 	#[inline]
 	pub const fn new() -> IntPtr32<T> {
@@ -102,6 +101,11 @@ impl<T> IntPtr32<[T]> {
 	}
 }
 
+#[cfg(feature = "nightly")]
+impl<T: ?Sized> marker::StructuralEq for IntPtr32<T> {}
+#[cfg(feature = "nightly")]
+impl<T: ?Sized> marker::StructuralPartialEq for IntPtr32<T> {}
+
 impl<T: ?Sized> Copy for IntPtr32<T> {}
 impl<T: ?Sized> Clone for IntPtr32<T> {
 	#[inline]
@@ -156,7 +160,7 @@ impl<T: ?Sized> AsMut<u32> for IntPtr32<T> {
 impl<T: ?Sized> From<u32> for IntPtr32<T> {
 	#[inline]
 	fn from(address: u32) -> IntPtr32<T> {
-		IntPtr32 { address, phantom_data: PhantomData }
+		IntPtr32 { address, phantom_data: marker::PhantomData }
 	}
 }
 impl<T: ?Sized> From<IntPtr32<T>> for u32 {

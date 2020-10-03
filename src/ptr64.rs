@@ -1,5 +1,4 @@
-use core::{cmp, fmt, hash, mem, ops, str};
-use core::marker::PhantomData;
+use core::{cmp, fmt, hash, marker, mem, ops, str};
 
 #[inline]
 const fn nibbles(word: u64) -> [u8; 16] {
@@ -24,14 +23,14 @@ const fn digit(nibble: u8) -> u8 {
 #[repr(transparent)]
 pub struct IntPtr64<T: ?Sized = ()> {
 	address: u64,
-	phantom_data: PhantomData<fn() -> T>,
+	phantom_data: marker::PhantomData<fn() -> T>,
 }
 
 impl<T: ?Sized> IntPtr64<T> {
 	// Work around unstable const fn features
-	const PHANTOM_DATA: PhantomData<fn() -> T> = PhantomData;
+	const PHANTOM_DATA: marker::PhantomData<fn() -> T> = marker::PhantomData;
 	/// Null pointer constant.
-	pub const NULL: IntPtr64<T> = IntPtr64 { address: 0, phantom_data: PhantomData };
+	pub const NULL: IntPtr64<T> = IntPtr64 { address: 0, phantom_data: marker::PhantomData };
 	/// Creates a null pointer.
 	#[inline]
 	pub const fn new() -> IntPtr64<T> {
@@ -114,6 +113,11 @@ impl<T> IntPtr64<[T]> {
 	}
 }
 
+#[cfg(feature = "nightly")]
+impl<T: ?Sized> marker::StructuralEq for IntPtr64<T> {}
+#[cfg(feature = "nightly")]
+impl<T: ?Sized> marker::StructuralPartialEq for IntPtr64<T> {}
+
 impl<T: ?Sized> Copy for IntPtr64<T> {}
 impl<T: ?Sized> Clone for IntPtr64<T> {
 	#[inline]
@@ -168,7 +172,7 @@ impl<T: ?Sized> AsMut<u64> for IntPtr64<T> {
 impl<T: ?Sized> From<u64> for IntPtr64<T> {
 	#[inline]
 	fn from(address: u64) -> IntPtr64<T> {
-		IntPtr64 { address, phantom_data: PhantomData }
+		IntPtr64 { address, phantom_data: marker::PhantomData }
 	}
 }
 impl<T: ?Sized> From<IntPtr64<T>> for u64 {
