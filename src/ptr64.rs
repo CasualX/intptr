@@ -99,6 +99,19 @@ impl<T: ?Sized> IntPtr64<T> {
 		]
 	}
 }
+#[cfg(target_pointer_width = "64")]
+impl<T: ?Sized> IntPtr64<T> {
+	/// Creates a pointer from `usize`.
+	#[inline]
+	pub const fn from_usize(address: usize) -> IntPtr64<T> {
+		Self::from_raw(address as u64)
+	}
+	/// Returns the address as `usize`.
+	#[inline]
+	pub const fn into_usize(self) -> usize {
+		self.address as usize
+	}
+}
 impl<T> IntPtr64<[T]> {
 	/// Decays the pointee from `[T]` to `T`.
 	#[inline]

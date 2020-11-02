@@ -18,9 +18,11 @@ pub use self::ptr32::*;
 pub use self::ptr64::*;
 
 #[cfg(target_pointer_width = "32")]
+#[doc(no_inline)]
 pub use IntPtr32 as IntPtr;
 
 #[cfg(target_pointer_width = "64")]
+#[doc(no_inline)]
 pub use IntPtr64 as IntPtr;
 
 impl<T: ?Sized> From<IntPtr32<T>> for IntPtr64<T> {
