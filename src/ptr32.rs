@@ -88,7 +88,7 @@ impl<T: ?Sized> IntPtr32<T> {
 	}
 }
 #[cfg(target_pointer_width = "32")]
-impl<T: ?Sized> IntPtr64<T> {
+impl<T: ?Sized> IntPtr32<T> {
 	/// Creates a pointer from `usize`.
 	#[inline]
 	pub const fn from_usize(address: usize) -> IntPtr32<T> {
@@ -98,6 +98,25 @@ impl<T: ?Sized> IntPtr64<T> {
 	#[inline]
 	pub const fn into_usize(self) -> usize {
 		self.address as usize
+	}
+}
+#[cfg(target_pointer_width = "32")]
+impl<T> IntPtr32<T> {
+	#[inline]
+	pub fn from_ptr(ptr: *const T) -> IntPtr32<T> {
+		Self::from_raw(ptr as usize as u32)
+	}
+	#[inline]
+	pub fn from_mut_ptr(ptr: *mut T) -> IntPtr32<T> {
+		Self::from_raw(ptr as usize as u32)
+	}
+	#[inline]
+	pub const fn as_ptr(self) -> *const T {
+		self.address as *const T
+	}
+	#[inline]
+	pub const fn as_mut_ptr(self) -> *mut T {
+		self.address as *mut T
 	}
 }
 impl<T> IntPtr32<[T]> {

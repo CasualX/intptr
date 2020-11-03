@@ -41,3 +41,13 @@ fn test_match() {
 		_ => panic!(),
 	}
 }
+
+#[test]
+fn raw_ptr() {
+	fn c_api(_: *const ()) {}
+	fn c_mut(_: *mut ()) {}
+
+	let ptr = IntPtr::<i32>::from_usize(0x1000);
+	c_api(ptr.cast().as_ptr());
+	c_mut(ptr.cast().as_mut_ptr());
+}
