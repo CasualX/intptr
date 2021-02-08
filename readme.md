@@ -4,6 +4,7 @@ IntPtr
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![crates.io](https://img.shields.io/crates/v/intptr.svg)](https://crates.io/crates/intptr)
 [![docs.rs](https://docs.rs/intptr/badge.svg)](https://docs.rs/intptr)
+[![Build status](https://github.com/CasualX/intptr/workflows/CI/badge.svg)](https://github.com/CasualX/intptr/actions)
 
 Unmanaged, explicitly sized and typed Pointers.
 
