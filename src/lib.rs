@@ -42,6 +42,7 @@ fn test_match() {
 	}
 }
 
+#[cfg(feature = "int2ptr")]
 #[test]
 fn raw_ptr() {
 	fn c_api(_: *const ()) {}
