@@ -144,6 +144,19 @@ impl<T> IntPtr64<[T]> {
 		IntPtr64 { address, phantom_data: IntPtr64::<T>::PHANTOM_DATA }
 	}
 }
+impl<T, const N: usize> IntPtr64<[T; N]> {
+	/// Decays the pointee from `[T; N]` to `T`.
+	#[inline]
+	pub const fn decay(self) -> IntPtr64<T> {
+		IntPtr64 { address: self.address, phantom_data: IntPtr64::<T>::PHANTOM_DATA }
+	}
+	/// Pointer arithmetic, gets the pointer of an element at the specified index.
+	#[inline]
+	pub const fn at(self, i: usize) -> IntPtr64<T> {
+		let address = self.address + (i * mem::size_of::<T>()) as u64;
+		IntPtr64 { address, phantom_data: IntPtr64::<T>::PHANTOM_DATA }
+	}
+}
 
 #[cfg(feature = "nightly")]
 impl<T: ?Sized> marker::StructuralEq for IntPtr64<T> {}
@@ -288,4 +301,6 @@ fn units() {
 	assert_eq!(b.into_raw(), 0x2200);
 	assert_eq!(format!("{}", a), "0x0000000000002000");
 	assert_eq!(c.into_raw(), 0x1E00);
+	assert_eq!(IntPtr64::<[u32]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
+	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 }
