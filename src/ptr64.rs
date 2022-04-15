@@ -234,8 +234,13 @@ impl<T> ops::Sub<usize> for IntPtr64<T> {
 impl<T: ?Sized> fmt::Debug for IntPtr64<T> {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		let buf = IntPtr64::fmt(*self);
-		f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+		if self.is_null() {
+			f.pad("0x0")
+		}
+		else {
+			let buf = IntPtr64::fmt(*self);
+			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+		}
 	}
 }
 impl<T: ?Sized> fmt::UpperHex for IntPtr64<T> {
@@ -253,8 +258,13 @@ impl<T: ?Sized> fmt::LowerHex for IntPtr64<T> {
 impl<T: ?Sized> fmt::Display for IntPtr64<T> {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		let buf = IntPtr64::fmt(*self);
-		f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+		if self.is_null() {
+			f.pad("0x0")
+		}
+		else {
+			let buf = IntPtr64::fmt(*self);
+			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+		}
 	}
 }
 
