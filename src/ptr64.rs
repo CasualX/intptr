@@ -112,7 +112,7 @@ impl<T: ?Sized> IntPtr64<T> {
 		self.address as usize
 	}
 }
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(feature = "int2ptr", target_pointer_width = "64"))]
 impl<T> IntPtr64<T> {
 	#[inline]
 	pub fn from_ptr(ptr: *const T) -> IntPtr64<T> {
