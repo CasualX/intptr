@@ -23,12 +23,12 @@ const fn digit(nibble: u8) -> u8 {
 #[repr(transparent)]
 pub struct IntPtr64<T: ?Sized = ()> {
 	address: u64,
-	phantom_data: marker::PhantomData<fn() -> T>,
+	phantom_data: marker::PhantomData<fn(T) -> T>,
 }
 
 impl<T: ?Sized> IntPtr64<T> {
 	// Work around unstable const fn features
-	const PHANTOM_DATA: marker::PhantomData<fn() -> T> = marker::PhantomData;
+	const PHANTOM_DATA: marker::PhantomData<fn(T) -> T> = marker::PhantomData;
 	/// Null pointer constant.
 	pub const NULL: IntPtr64<T> = IntPtr64 { address: 0, phantom_data: marker::PhantomData };
 	/// Creates a null pointer.
