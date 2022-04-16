@@ -112,25 +112,6 @@ impl<T: ?Sized> IntPtr64<T> {
 		self.address as usize
 	}
 }
-#[cfg(all(feature = "int2ptr", target_pointer_width = "64"))]
-impl<T> IntPtr64<T> {
-	#[inline]
-	pub fn from_ptr(ptr: *const T) -> IntPtr64<T> {
-		Self::from_raw(ptr as usize as u64)
-	}
-	#[inline]
-	pub fn from_mut_ptr(ptr: *mut T) -> IntPtr64<T> {
-		Self::from_raw(ptr as usize as u64)
-	}
-	#[inline]
-	pub const fn as_ptr(self) -> *const T {
-		self.address as *const T
-	}
-	#[inline]
-	pub const fn as_mut_ptr(self) -> *mut T {
-		self.address as *mut T
-	}
-}
 impl<T> IntPtr64<[T]> {
 	/// Decays the pointee from `[T]` to `T`.
 	#[inline]
@@ -303,4 +284,5 @@ fn units() {
 	assert_eq!(c.into_raw(), 0x1E00);
 	assert_eq!(IntPtr64::<[u32]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
+	assert_eq!(format!("{}", IntPtr64::<()>::NULL), "0x0");
 }

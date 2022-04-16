@@ -12,7 +12,6 @@ readme = "readme.md"
 
 [features]
 nightly = []
-int2ptr = []
 
 [dependencies.serde]
 version = "1.0"
