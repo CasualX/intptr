@@ -288,6 +288,7 @@ fn units() {
 	assert_eq!(mem::size_of_val(&a), 4);
 	assert_eq!(b.into_raw(), 0x2100);
 	assert_eq!(format!("{}", a), "0x00002000");
+	assert_eq!(format!("{}", IntPtr32::<()>::NULL), "0x0");
 	assert_eq!(c.into_raw(), 0x1F00);
 	assert_eq!(IntPtr32::<[u32]>::from_raw(0x1000).at(1), IntPtr32::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr32::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr32::<u32>::from_raw(0x1004));
