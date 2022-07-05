@@ -269,8 +269,11 @@ impl<T: ?Sized> fmt::Display for IntPtr32<T> {
 	}
 }
 
-#[cfg(feature = "dataview")]
-unsafe impl<T: ?Sized + 'static> dataview::Pod for IntPtr32<T> {}
+#[cfg(feature = "dataview_0_1")]
+unsafe impl<T: ?Sized + 'static> dataview_0_1::Pod for IntPtr32<T> {}
+
+#[cfg(feature = "dataview_1")]
+unsafe impl<T: ?Sized + 'static> dataview_1::Pod for IntPtr32<T> {}
 
 #[cfg(feature = "serde")]
 impl<T: ?Sized> serde::Serialize for IntPtr32<T> {
