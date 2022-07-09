@@ -17,7 +17,7 @@ Documentation can be found on [docs.rs](https://docs.rs/intptr/).
 
 In your Cargo.toml, put
 
-```
+```text
 [dependencies]
 intptr = "0.1"
 ```
@@ -27,7 +27,7 @@ Examples
 
 This crate's purpose is to model 32-bit and 64-bit 'pointers' to memory outside of your address space.
 
-Eg. when interacting with other processes' their memory address space.
+Eg. when interacting with other processes' memory address space.
 
 License
 -------
