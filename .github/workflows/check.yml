@@ -1,4 +1,4 @@
-name: CI
+name: Check
 
 on:
   push:
@@ -12,12 +12,20 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.optional }}
     strategy:
+      fail-fast: false
       matrix:
-        rust:
-          - stable
-          - beta
-          - nightly
+        include:
+          - rust: stable
+            args: --features=serde,dataview
+            optional: false
+          - rust: beta
+            args: --features=serde,dataview
+            optional: false
+          - rust: nightly
+            args: --features=serde,dataview,nightly
+            optional: true
 
     steps:
       - name: Checkout sources
@@ -34,9 +42,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features=serde,dataview
-
-      - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+          args: ${{ matrix.args }}

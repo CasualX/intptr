@@ -147,8 +147,6 @@ impl<T, const N: usize> IntPtr32<[T; N]> {
 }
 
 #[cfg(feature = "nightly")]
-impl<T: ?Sized> marker::StructuralEq for IntPtr32<T> {}
-#[cfg(feature = "nightly")]
 impl<T: ?Sized> marker::StructuralPartialEq for IntPtr32<T> {}
 
 impl<T: ?Sized> Copy for IntPtr32<T> {}

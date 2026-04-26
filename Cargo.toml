@@ -1,6 +1,6 @@
 [package]
 name = "intptr"
-version = "0.1.6" # Update readme if changed
+version = "0.1.7" # Update readme if changed
 authors = ["Casper <CasualX@users.noreply.github.com>"]
 edition = "2021"
 license = "MIT"
