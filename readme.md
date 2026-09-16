@@ -6,7 +6,7 @@ IntPtr
 [![docs.rs](https://docs.rs/intptr/badge.svg)](https://docs.rs/intptr)
 [![Build status](https://github.com/CasualX/intptr/workflows/Check/badge.svg)](https://github.com/CasualX/intptr/actions)
 
-Unmanaged, explicitly sized and typed Pointers.
+Explicitly sized, typed pointers to memory outside the current address space.
 
 Library
 -------
@@ -19,7 +19,7 @@ In your Cargo.toml, put
 
 ```text
 [dependencies]
-intptr = "0.1"
+intptr = "1.0"
 ```
 
 Examples

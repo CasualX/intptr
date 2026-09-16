@@ -9,37 +9,34 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  ci:
+  test:
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.optional }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          - rust: 1.85.0
+            args: --features=serde,dataview
+            optional: false
           - rust: stable
             args: --features=serde,dataview
             optional: false
           - rust: beta
             args: --features=serde,dataview
             optional: false
-          - rust: nightly
-            args: --features=serde,dataview,nightly
-            optional: true
-
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          default: true
 
-      - name: Quick check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: ${{ matrix.args }}
+      - name: Test
+        run: cargo test ${{ matrix.args }}

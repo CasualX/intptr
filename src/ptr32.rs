@@ -1,6 +1,7 @@
 use core::{cmp, fmt, hash, marker, mem, ops, str};
 
 #[inline]
+#[rustfmt::skip]
 const fn nibbles(word: u32) -> [u8; 8] {
 	let b = word.to_le_bytes();
 	[
@@ -13,6 +14,16 @@ const fn nibbles(word: u32) -> [u8; 8] {
 #[inline]
 const fn digit(nibble: u8) -> u8 {
 	if nibble < 10 { b'0' + nibble } else { b'a' + (nibble - 10) }
+}
+
+#[inline]
+fn formatted(bytes: &[u8]) -> &str {
+	#[cfg(debug_assertions)]
+	return str::from_utf8(bytes).expect("pointer formatting only emits ASCII");
+
+	#[cfg(not(debug_assertions))]
+	// SAFETY: `fmt` constructs the buffer exclusively from ASCII byte literals.
+	return unsafe { str::from_utf8_unchecked(bytes) };
 }
 
 /// Unmanaged 32-bit typed pointer.
@@ -59,7 +70,7 @@ impl<T: ?Sized> IntPtr32<T> {
 		let address = self.address + offset;
 		IntPtr32 { address, phantom_data: IntPtr32::<U>::PHANTOM_DATA }
 	}
-	/// Offsets the pointer and cast.
+	/// Offsets the pointer and casts it, wrapping at the 32-bit address boundary.
 	#[inline]
 	pub const fn offset<U: ?Sized>(self, offset: i32) -> IntPtr32<U> {
 		let address = self.address.wrapping_add(offset as u32);
@@ -72,6 +83,7 @@ impl<T: ?Sized> IntPtr32<T> {
 	}
 	/// Formats the pointer.
 	#[inline]
+	#[rustfmt::skip]
 	pub const fn fmt(self) -> [u8; 10] {
 		let n = nibbles(self.address);
 		[
@@ -98,25 +110,6 @@ impl<T: ?Sized> IntPtr32<T> {
 	#[inline]
 	pub const fn into_usize(self) -> usize {
 		self.address as usize
-	}
-}
-#[cfg(all(feature = "int2ptr", target_pointer_width = "32"))]
-impl<T> IntPtr32<T> {
-	#[inline]
-	pub fn from_ptr(ptr: *const T) -> IntPtr32<T> {
-		Self::from_raw(ptr as usize as u32)
-	}
-	#[inline]
-	pub fn from_mut_ptr(ptr: *mut T) -> IntPtr32<T> {
-		Self::from_raw(ptr as usize as u32)
-	}
-	#[inline]
-	pub const fn as_ptr(self) -> *const T {
-		self.address as *const T
-	}
-	#[inline]
-	pub const fn as_mut_ptr(self) -> *mut T {
-		self.address as *mut T
 	}
 }
 impl<T> IntPtr32<[T]> {
@@ -146,9 +139,6 @@ impl<T, const N: usize> IntPtr32<[T; N]> {
 	}
 }
 
-#[cfg(feature = "nightly")]
-impl<T: ?Sized> marker::StructuralPartialEq for IntPtr32<T> {}
-
 impl<T: ?Sized> Copy for IntPtr32<T> {}
 impl<T: ?Sized> Clone for IntPtr32<T> {
 	#[inline]
@@ -172,7 +162,7 @@ impl<T: ?Sized> PartialEq for IntPtr32<T> {
 impl<T: ?Sized> PartialOrd for IntPtr32<T> {
 	#[inline]
 	fn partial_cmp(&self, rhs: &IntPtr32<T>) -> Option<cmp::Ordering> {
-		self.address.partial_cmp(&rhs.address)
+		Some(self.cmp(rhs))
 	}
 }
 impl<T: ?Sized> Ord for IntPtr32<T> {
@@ -238,7 +228,7 @@ impl<T: ?Sized> fmt::Debug for IntPtr32<T> {
 		}
 		else {
 			let buf = IntPtr32::fmt(*self);
-			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+			f.pad(formatted(&buf))
 		}
 	}
 }
@@ -262,16 +252,14 @@ impl<T: ?Sized> fmt::Display for IntPtr32<T> {
 		}
 		else {
 			let buf = IntPtr32::fmt(*self);
-			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+			f.pad(formatted(&buf))
 		}
 	}
 }
 
-#[cfg(feature = "dataview_0_1")]
-unsafe impl<T: ?Sized + 'static> dataview_0_1::Pod for IntPtr32<T> {}
-
-#[cfg(feature = "dataview_1")]
-unsafe impl<T: ?Sized + 'static> dataview_1::Pod for IntPtr32<T> {}
+#[cfg(feature = "dataview")]
+// SAFETY: This is transparent over `u32`; the phantom field is a `Pod` ZST.
+unsafe impl<T: ?Sized + 'static> dataview::Pod for IntPtr32<T> {}
 
 #[cfg(feature = "serde")]
 impl<T: ?Sized> serde::Serialize for IntPtr32<T> {
@@ -281,7 +269,16 @@ impl<T: ?Sized> serde::Serialize for IntPtr32<T> {
 	}
 }
 
+#[cfg(feature = "serde")]
+impl<'de, T: ?Sized> serde::Deserialize<'de> for IntPtr32<T> {
+	#[inline]
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		u32::deserialize(deserializer).map(IntPtr32::from_raw)
+	}
+}
+
 #[test]
+#[rustfmt::skip]
 fn units() {
 	let a = IntPtr32::<f32>::from(0x2000);
 	let b = a + 0x40;
@@ -293,4 +290,39 @@ fn units() {
 	assert_eq!(c.into_raw(), 0x1F00);
 	assert_eq!(IntPtr32::<[u32]>::from_raw(0x1000).at(1), IntPtr32::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr32::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr32::<u32>::from_raw(0x1004));
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn member_overflow_panics() {
+	let _ = IntPtr32::<()>::member(u32::MAX, 1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn field_overflow_panics() {
+	let _ = IntPtr32::<()>::from_raw(u32::MAX).field::<()>(1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn element_overflow_panics() {
+	let _ = IntPtr32::<[u32]>::from_raw(u32::MAX).at(1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn add_overflow_panics() {
+	let _ = IntPtr32::<u32>::from_raw(u32::MAX) + 1;
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn sub_overflow_panics() {
+	let _ = IntPtr32::<u32>::NULL - 1;
 }

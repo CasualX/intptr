@@ -1,6 +1,7 @@
 use core::{cmp, fmt, hash, marker, mem, ops, str};
 
 #[inline]
+#[rustfmt::skip]
 const fn nibbles(word: u64) -> [u8; 16] {
 	let b = word.to_le_bytes();
 	[
@@ -17,6 +18,16 @@ const fn nibbles(word: u64) -> [u8; 16] {
 #[inline]
 const fn digit(nibble: u8) -> u8 {
 	if nibble < 10 { b'0' + nibble } else { b'a' + (nibble - 10) }
+}
+
+#[inline]
+fn formatted(bytes: &[u8]) -> &str {
+	#[cfg(debug_assertions)]
+	return str::from_utf8(bytes).expect("pointer formatting only emits ASCII");
+
+	#[cfg(not(debug_assertions))]
+	// SAFETY: `fmt` constructs the buffer exclusively from ASCII byte literals.
+	return unsafe { str::from_utf8_unchecked(bytes) };
 }
 
 /// Unmanaged 64-bit typed pointer.
@@ -63,7 +74,7 @@ impl<T: ?Sized> IntPtr64<T> {
 		let address = self.address + offset as u64;
 		IntPtr64 { address, phantom_data: IntPtr64::<U>::PHANTOM_DATA }
 	}
-	/// Offsets the pointer and cast.
+	/// Offsets the pointer and casts it, wrapping at the 64-bit address boundary.
 	#[inline]
 	pub const fn offset<U: ?Sized>(self, offset: i64) -> IntPtr64<U> {
 		let address = self.address.wrapping_add(offset as u64);
@@ -76,6 +87,7 @@ impl<T: ?Sized> IntPtr64<T> {
 	}
 	/// Formats the pointer.
 	#[inline]
+	#[rustfmt::skip]
 	pub const fn fmt(self) -> [u8; 18] {
 		let n = nibbles(self.address);
 		[
@@ -112,25 +124,6 @@ impl<T: ?Sized> IntPtr64<T> {
 		self.address as usize
 	}
 }
-#[cfg(all(feature = "int2ptr", target_pointer_width = "64"))]
-impl<T> IntPtr64<T> {
-	#[inline]
-	pub fn from_ptr(ptr: *const T) -> IntPtr64<T> {
-		Self::from_raw(ptr as usize as u64)
-	}
-	#[inline]
-	pub fn from_mut_ptr(ptr: *mut T) -> IntPtr64<T> {
-		Self::from_raw(ptr as usize as u64)
-	}
-	#[inline]
-	pub const fn as_ptr(self) -> *const T {
-		self.address as *const T
-	}
-	#[inline]
-	pub const fn as_mut_ptr(self) -> *mut T {
-		self.address as *mut T
-	}
-}
 impl<T> IntPtr64<[T]> {
 	/// Decays the pointee from `[T]` to `T`.
 	#[inline]
@@ -158,9 +151,6 @@ impl<T, const N: usize> IntPtr64<[T; N]> {
 	}
 }
 
-#[cfg(feature = "nightly")]
-impl<T: ?Sized> marker::StructuralPartialEq for IntPtr64<T> {}
-
 impl<T: ?Sized> Copy for IntPtr64<T> {}
 impl<T: ?Sized> Clone for IntPtr64<T> {
 	#[inline]
@@ -184,7 +174,7 @@ impl<T: ?Sized> PartialEq for IntPtr64<T> {
 impl<T: ?Sized> PartialOrd for IntPtr64<T> {
 	#[inline]
 	fn partial_cmp(&self, rhs: &IntPtr64<T>) -> Option<cmp::Ordering> {
-		self.address.partial_cmp(&rhs.address)
+		Some(self.cmp(rhs))
 	}
 }
 impl<T: ?Sized> Ord for IntPtr64<T> {
@@ -250,7 +240,7 @@ impl<T: ?Sized> fmt::Debug for IntPtr64<T> {
 		}
 		else {
 			let buf = IntPtr64::fmt(*self);
-			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+			f.pad(formatted(&buf))
 		}
 	}
 }
@@ -274,16 +264,14 @@ impl<T: ?Sized> fmt::Display for IntPtr64<T> {
 		}
 		else {
 			let buf = IntPtr64::fmt(*self);
-			f.pad(unsafe { str::from_utf8_unchecked(&buf) })
+			f.pad(formatted(&buf))
 		}
 	}
 }
 
-#[cfg(feature = "dataview_0_1")]
-unsafe impl<T: ?Sized + 'static> dataview_0_1::Pod for IntPtr64<T> {}
-
-#[cfg(feature = "dataview_1")]
-unsafe impl<T: ?Sized + 'static> dataview_1::Pod for IntPtr64<T> {}
+#[cfg(feature = "dataview")]
+// SAFETY: This is transparent over `u64`; the phantom field is a `Pod` ZST.
+unsafe impl<T: ?Sized + 'static> dataview::Pod for IntPtr64<T> {}
 
 #[cfg(feature = "serde")]
 impl<T: ?Sized> serde::Serialize for IntPtr64<T> {
@@ -293,7 +281,16 @@ impl<T: ?Sized> serde::Serialize for IntPtr64<T> {
 	}
 }
 
+#[cfg(feature = "serde")]
+impl<'de, T: ?Sized> serde::Deserialize<'de> for IntPtr64<T> {
+	#[inline]
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		u64::deserialize(deserializer).map(IntPtr64::from_raw)
+	}
+}
+
 #[test]
+#[rustfmt::skip]
 fn units() {
 	let a = IntPtr64::<f64>::from(0x2000);
 	let b = a + 0x40;
@@ -305,4 +302,39 @@ fn units() {
 	assert_eq!(c.into_raw(), 0x1E00);
 	assert_eq!(IntPtr64::<[u32]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn member_overflow_panics() {
+	let _ = IntPtr64::<()>::member(u64::MAX, 1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn field_overflow_panics() {
+	let _ = IntPtr64::<()>::from_raw(u64::MAX).field::<()>(1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn element_overflow_panics() {
+	let _ = IntPtr64::<[u64]>::from_raw(u64::MAX).at(1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn add_overflow_panics() {
+	let _ = IntPtr64::<u64>::from_raw(u64::MAX) + 1;
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic]
+fn sub_overflow_panics() {
+	let _ = IntPtr64::<u64>::NULL - 1;
 }
