@@ -268,6 +268,12 @@ impl<T: ?Sized> fmt::Display for IntPtr64<T> {
 		}
 	}
 }
+impl<T: ?Sized> fmt::Pointer for IntPtr64<T> {
+	#[inline]
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		fmt::Display::fmt(self, f)
+	}
+}
 
 impl<T: ?Sized> str::FromStr for IntPtr64<T> {
 	type Err = num::ParseIntError;
@@ -307,7 +313,9 @@ fn units() {
 	assert_eq!(mem::size_of_val(&a), 8);
 	assert_eq!(b.into_raw(), 0x2200);
 	assert_eq!(format!("{}", a), "0x0000000000002000");
+	assert_eq!(format!("{:p}", a), "0x0000000000002000");
 	assert_eq!(format!("{}", IntPtr64::<()>::NULL), "0x0");
+	assert_eq!(format!("{:p}", IntPtr64::<()>::NULL), "0x0");
 	assert_eq!("0x0000000000002000".parse(), Ok(a));
 	assert_eq!("2000".parse(), Ok(a));
 	assert_eq!("0".parse(), Ok(IntPtr64::<f64>::NULL));

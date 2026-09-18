@@ -256,6 +256,12 @@ impl<T: ?Sized> fmt::Display for IntPtr32<T> {
 		}
 	}
 }
+impl<T: ?Sized> fmt::Pointer for IntPtr32<T> {
+	#[inline]
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		fmt::Display::fmt(self, f)
+	}
+}
 
 impl<T: ?Sized> str::FromStr for IntPtr32<T> {
 	type Err = num::ParseIntError;
@@ -295,7 +301,9 @@ fn units() {
 	assert_eq!(mem::size_of_val(&a), 4);
 	assert_eq!(b.into_raw(), 0x2100);
 	assert_eq!(format!("{}", a), "0x00002000");
+	assert_eq!(format!("{:p}", a), "0x00002000");
 	assert_eq!(format!("{}", IntPtr32::<()>::NULL), "0x0");
+	assert_eq!(format!("{:p}", IntPtr32::<()>::NULL), "0x0");
 	assert_eq!("0x00002000".parse(), Ok(a));
 	assert_eq!("2000".parse(), Ok(a));
 	assert_eq!("0".parse(), Ok(IntPtr32::<f32>::NULL));

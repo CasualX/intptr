@@ -30,3 +30,12 @@ impl<T: ?Sized> From<IntPtr32<T>> for IntPtr64<T> {
 		IntPtr64::from(ptr.into_raw() as u64)
 	}
 }
+
+impl<T: ?Sized> TryFrom<IntPtr64<T>> for IntPtr32<T> {
+	type Error = core::num::TryFromIntError;
+
+	#[inline]
+	fn try_from(ptr: IntPtr64<T>) -> Result<IntPtr32<T>, core::num::TryFromIntError> {
+		u32::try_from(ptr.into_raw()).map(IntPtr32::from_raw)
+	}
+}
