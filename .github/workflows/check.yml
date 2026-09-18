@@ -15,20 +15,11 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.optional }}
+    continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - rust: 1.85.0
-            args: --features=serde,dataview
-            optional: false
-          - rust: stable
-            args: --features=serde,dataview
-            optional: false
-          - rust: beta
-            args: --features=serde,dataview
-            optional: false
+        rust: [1.85.0, stable, beta]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
@@ -38,5 +29,26 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
-      - name: Test
-        run: cargo test ${{ matrix.args }}
+      - name: Check without features
+        run: cargo check
+
+      - name: Test all features
+        run: cargo test --all-features
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: i686-pc-windows-msvc
+
+      - name: Test 64-bit
+        run: cargo test --all-features
+
+      - name: Test 32-bit
+        run: cargo test --target i686-pc-windows-msvc --all-features
