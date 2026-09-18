@@ -133,7 +133,7 @@ impl<T> IntPtr64<[T]> {
 	/// Pointer arithmetic, gets the pointer of an element at the specified index.
 	#[inline]
 	pub const fn at(self, i: usize) -> IntPtr64<T> {
-		let address = self.address + (i * mem::size_of::<T>()) as u64;
+		let address = self.address + (i as u64) * mem::size_of::<T>() as u64;
 		IntPtr64 { address, phantom_data: IntPtr64::<T>::PHANTOM_DATA }
 	}
 }
@@ -146,7 +146,7 @@ impl<T, const N: usize> IntPtr64<[T; N]> {
 	/// Pointer arithmetic, gets the pointer of an element at the specified index.
 	#[inline]
 	pub const fn at(self, i: usize) -> IntPtr64<T> {
-		let address = self.address + (i * mem::size_of::<T>()) as u64;
+		let address = self.address + (i as u64) * mem::size_of::<T>() as u64;
 		IntPtr64 { address, phantom_data: IntPtr64::<T>::PHANTOM_DATA }
 	}
 }
@@ -219,7 +219,7 @@ impl<T> ops::Add<usize> for IntPtr64<T> {
 	type Output = IntPtr64<T>;
 	#[inline]
 	fn add(self, other: usize) -> IntPtr64<T> {
-		let address = self.address + (other * mem::size_of::<T>()) as u64;
+		let address = self.address + (other as u64) * mem::size_of::<T>() as u64;
 		IntPtr64 { address, phantom_data: self.phantom_data }
 	}
 }
@@ -227,8 +227,20 @@ impl<T> ops::Sub<usize> for IntPtr64<T> {
 	type Output = IntPtr64<T>;
 	#[inline]
 	fn sub(self, other: usize) -> IntPtr64<T> {
-		let address = self.address - (other * mem::size_of::<T>()) as u64;
+		let address = self.address - (other as u64) * mem::size_of::<T>() as u64;
 		IntPtr64 { address, phantom_data: self.phantom_data }
+	}
+}
+impl<T> ops::AddAssign<usize> for IntPtr64<T> {
+	#[inline]
+	fn add_assign(&mut self, other: usize) {
+		*self = *self + other;
+	}
+}
+impl<T> ops::SubAssign<usize> for IntPtr64<T> {
+	#[inline]
+	fn sub_assign(&mut self, other: usize) {
+		*self = *self - other;
 	}
 }
 
@@ -310,6 +322,9 @@ fn units() {
 	let a = IntPtr64::<f64>::from(0x2000);
 	let b = a + 0x40;
 	let c = a - 0x40;
+	let mut d = a;
+	d += 0x40;
+	d -= 0x20;
 	assert_eq!(mem::size_of_val(&a), 8);
 	assert_eq!(b.into_raw(), 0x2200);
 	assert_eq!(format!("{}", a), "0x0000000000002000");
@@ -322,6 +337,7 @@ fn units() {
 	assert!("0x10000000000000000".parse::<IntPtr64>().is_err());
 	assert!("nope".parse::<IntPtr64>().is_err());
 	assert_eq!(c.into_raw(), 0x1E00);
+	assert_eq!(d.into_raw(), 0x2100);
 	assert_eq!(IntPtr64::<[u32]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 }
