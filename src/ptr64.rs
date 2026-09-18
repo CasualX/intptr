@@ -1,4 +1,4 @@
-use core::{cmp, fmt, hash, marker, mem, ops, str};
+use core::{cmp, fmt, hash, marker, mem, num, ops, str};
 
 #[inline]
 #[rustfmt::skip]
@@ -269,6 +269,15 @@ impl<T: ?Sized> fmt::Display for IntPtr64<T> {
 	}
 }
 
+impl<T: ?Sized> str::FromStr for IntPtr64<T> {
+	type Err = num::ParseIntError;
+
+	fn from_str(s: &str) -> Result<IntPtr64<T>, num::ParseIntError> {
+		let s = s.strip_prefix("0x").unwrap_or(s);
+		u64::from_str_radix(s, 16).map(IntPtr64::from_raw)
+	}
+}
+
 #[cfg(feature = "dataview")]
 // SAFETY: This is transparent over `u64`; the phantom field is a `Pod` ZST.
 unsafe impl<T: ?Sized + 'static> dataview::Pod for IntPtr64<T> {}
@@ -299,6 +308,11 @@ fn units() {
 	assert_eq!(b.into_raw(), 0x2200);
 	assert_eq!(format!("{}", a), "0x0000000000002000");
 	assert_eq!(format!("{}", IntPtr64::<()>::NULL), "0x0");
+	assert_eq!("0x0000000000002000".parse(), Ok(a));
+	assert_eq!("2000".parse(), Ok(a));
+	assert_eq!("0".parse(), Ok(IntPtr64::<f64>::NULL));
+	assert!("0x10000000000000000".parse::<IntPtr64>().is_err());
+	assert!("nope".parse::<IntPtr64>().is_err());
 	assert_eq!(c.into_raw(), 0x1E00);
 	assert_eq!(IntPtr64::<[u32]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
