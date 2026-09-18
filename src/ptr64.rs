@@ -287,11 +287,12 @@ impl<T: ?Sized> fmt::Pointer for IntPtr64<T> {
 	}
 }
 
+/// Parses a hexadecimal address, optionally prefixed with `0x` or `0X`.
 impl<T: ?Sized> str::FromStr for IntPtr64<T> {
 	type Err = num::ParseIntError;
 
 	fn from_str(s: &str) -> Result<IntPtr64<T>, num::ParseIntError> {
-		let s = s.strip_prefix("0x").unwrap_or(s);
+		let s = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")).unwrap_or(s);
 		u64::from_str_radix(s, 16).map(IntPtr64::from_raw)
 	}
 }
@@ -332,6 +333,7 @@ fn units() {
 	assert_eq!(format!("{}", IntPtr64::<()>::NULL), "0x0");
 	assert_eq!(format!("{:p}", IntPtr64::<()>::NULL), "0x0");
 	assert_eq!("0x0000000000002000".parse(), Ok(a));
+	assert_eq!("0X0000000000002000".parse(), Ok(a));
 	assert_eq!("2000".parse(), Ok(a));
 	assert_eq!("0".parse(), Ok(IntPtr64::<f64>::NULL));
 	assert!("0x10000000000000000".parse::<IntPtr64>().is_err());
