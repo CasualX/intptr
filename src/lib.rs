@@ -39,3 +39,15 @@ impl<T: ?Sized> TryFrom<IntPtr64<T>> for IntPtr32<T> {
 		u32::try_from(ptr.into_raw()).map(IntPtr32::from_raw)
 	}
 }
+
+#[test]
+fn pointer_width_conversions() {
+	assert_eq!(IntPtr32::try_from(IntPtr64::<u8>::NULL), Ok(IntPtr32::<u8>::NULL));
+
+	let ptr32 = IntPtr32::<u8>::from_raw(u32::MAX);
+	assert_eq!(IntPtr64::from(ptr32), IntPtr64::<u8>::from_raw(u32::MAX as u64));
+	assert_eq!(IntPtr32::try_from(IntPtr64::<u8>::from_raw(u32::MAX as u64)), Ok(ptr32));
+
+	assert!(IntPtr32::try_from(IntPtr64::<u8>::from_raw(u32::MAX as u64 + 1)).is_err());
+	assert!(IntPtr32::try_from(IntPtr64::<u8>::from_raw(u64::MAX)).is_err());
+}

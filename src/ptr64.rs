@@ -344,6 +344,23 @@ fn units() {
 	assert_eq!(IntPtr64::<[u32; 2]>::from_raw(0x1000).at(1), IntPtr64::<u32>::from_raw(0x1004));
 }
 
+#[cfg(target_pointer_width = "32")]
+#[test]
+fn wide_element_offsets() {
+	let index = usize::MAX;
+	let offset = (index as u64) * mem::size_of::<u64>() as u64;
+
+	assert_eq!(IntPtr64::<[u64]>::NULL.at(index).into_raw(), offset);
+	assert_eq!((IntPtr64::<u64>::NULL + index).into_raw(), offset);
+	assert_eq!((IntPtr64::<u64>::from_raw(offset) - index).into_raw(), 0);
+
+	let mut ptr = IntPtr64::<u64>::NULL;
+	ptr += index;
+	assert_eq!(ptr.into_raw(), offset);
+	ptr -= index;
+	assert!(ptr.is_null());
+}
+
 #[cfg(debug_assertions)]
 #[test]
 #[should_panic]
