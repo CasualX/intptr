@@ -6,4 +6,3 @@ newline_style = "Native"
 reorder_imports = false
 reorder_modules = true
 use_small_heuristics = "Max"
-control_brace_style = "ClosingNextLine"

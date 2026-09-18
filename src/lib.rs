@@ -1,13 +1,4 @@
-/*!
-IntPtr
-======
-
-This crate's purpose is to model 32-bit and 64-bit 'pointers' to memory outside of your address space.
-
-Eg. when interacting with other processes' memory address space.
-
-*/
-
+#![doc = include_str!("../readme.md")]
 #![cfg_attr(not(test), no_std)]
 
 mod ptr32;
